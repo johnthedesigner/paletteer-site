@@ -5,14 +5,16 @@ import chroma from "chroma-js";
 import _ from "lodash";
 import Head from "next/head";
 import { useEffect, useState } from "react";
+import { CompactPicker, SketchPicker } from "react-color";
 
 export default function Home() {
-  const [palettes, setPalettes] = useState([generateColors("#F77777")]);
-  const [seeds, setSeeds] = useState([]);
+  const [palettes, setPalettes] = useState([]);
+  const [seeds, setSeeds] = useState(["#F77777"]);
   const [selectedSeed, setSelectedSeed] = useState(0);
   const [selectedSwatch, setSelectedSwatch] = useState(0);
   const [hoveredSwatch, setHoveredSwatch] = useState(null);
   const [seedLabelEditor, setSeedLabelEditor] = useState(null);
+  const [colorPickerActive, setColorPickerActive] = useState(0);
 
   // When the seed colors are updated, update full palettes
   useEffect(() => {
@@ -30,6 +32,7 @@ export default function Home() {
   const addColor = async () => {
     await setSeeds([...seeds, "#F77777"]);
     selectSeed(seeds.length);
+    setColorPickerActive(seeds.length);
   };
 
   const updateSeed = (e, index) => {
@@ -54,6 +57,13 @@ export default function Home() {
     setSeedLabelEditor(index);
   };
 
+  const updateSeedColor = (color) => {
+    console.log("color to update", color.hex);
+    let newSeeds = [...seeds];
+    newSeeds[colorPickerActive] = color.hex;
+    setSeeds(newSeeds);
+  };
+
   const Seed = ({ index, seed }) => {
     return (
       <div className={`seed ${selectedSeed === index ? "seed--selected" : ""}`}>
@@ -75,7 +85,6 @@ export default function Home() {
                 className="seed__label-input"
                 value={palettes[index] ? palettes[index].name : ""}
                 onKeyUp={(e) => {
-                  console.log(e.key);
                   if (e.key === "Enter") {
                     editingSeedLabel(null);
                   }
@@ -85,7 +94,12 @@ export default function Home() {
             ) : (
               <div
                 className="seed__label"
-                onDoubleClick={() => editingSeedLabel(index)}>
+                onDoubleClick={() => editingSeedLabel(index)}
+                style={{
+                  color: palettes[selectedSeed]
+                    ? palettes[selectedSeed].swatches[6].hex
+                    : "black",
+                }}>
                 {palettes[index] ? palettes[index].name : ""}
               </div>
             )}
@@ -95,8 +109,6 @@ export default function Home() {
     );
   };
 
-  console.log(palettes);
-
   return (
     <>
       <Head>
@@ -105,7 +117,7 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main>
+      <main onClick={() => setColorPickerActive(null)}>
         <div className="header">
           <div
             className="logo"
@@ -119,7 +131,8 @@ export default function Home() {
         </div>
         <div className="controls">
           <div className="seed-colors">
-            {seeds.length > 0 && (
+            <p className="seed-colors__label">Seed Colors: </p>
+            {seeds.length > 0 ? (
               <>
                 {_.map(seeds, (seed, index) => {
                   return (
@@ -129,6 +142,8 @@ export default function Home() {
                   );
                 })}
               </>
+            ) : (
+              <p className="seed-colors__blank-state">None yet!</p>
             )}
             <button className="seed__add-button" onClick={addColor}>
               <PlusIcon />
@@ -144,64 +159,90 @@ export default function Home() {
           )}
           {palettes.length > 0 && (
             <>
-              {_.map(palettes[selectedSeed].swatches, (swatch, index) => {
-                // Check if this is the selected swatch
-                let selected = index === selectedSwatch;
-                // Check if we should display contrast figures
-                let displayContrast =
-                  index === selectedSwatch || index === hoveredSwatch;
-                let swatchStyles = {
-                  background: swatch.hex,
-                  boxShadow: selected
-                    ? "inset 0.25rem 0.25rem 0 rgb(0,0,0,.25)"
-                    : "none",
-                  transition: `all ease-in-out 0.1s, background ease-in 0.1s ${
-                    index * 0.02
-                  }s`,
-                  padding: selected
-                    ? "2.125rem 0.375rem 1.875rem 0.875rem"
-                    : "2rem 0.5rem",
-                };
-                let adaptiveTextStyles = { color: swatch.displayColor };
-                let contrastStyles = { opacity: displayContrast ? 1 : 0 };
-                return (
-                  <div
-                    className="swatch"
-                    onClick={() => selectSwatch(index)}
-                    onMouseEnter={() => hoverSwatch(index)}
-                    onMouseLeave={() => hoverSwatch(null)}>
-                    <div className="swatch__body" style={swatchStyles}>
-                      <div
-                        className="swatch__white-contrast"
-                        style={contrastStyles}>
-                        <p className="swatch__contrast-text">White Contrast</p>
-                        <p
-                          className="swatch__contrast-value"
-                          style={{ background: "white", color: swatch.hex }}>
-                          {swatch.contrastWhite}
-                        </p>
-                      </div>
-                      <div className="swatch__label" style={adaptiveTextStyles}>
-                        <p className="swatch__index">
-                          {_.padStart(index + 1, 2, "0")}
-                        </p>
-                        <p className="swatch__hex">{swatch.hex}</p>
-                      </div>
-                      <div
-                        className="swatch__black-contrast"
-                        style={contrastStyles}>
-                        <p className="swatch__contrast-text">Black Contrast</p>
-                        <p
-                          className="swatch__contrast-value"
-                          style={{ background: "black", color: swatch.hex }}>
-                          {swatch.contrastBlack}
-                        </p>
+              {_.map(
+                (palettes[selectedSeed] ? palettes[selectedSeed] : []).swatches,
+                (swatch, index) => {
+                  // Check if this is the selected swatch
+                  let selected = index === selectedSwatch;
+                  // Check if we should display contrast figures
+                  let displayContrast =
+                    index === selectedSwatch || index === hoveredSwatch;
+                  let swatchStyles = {
+                    background: swatch.hex,
+                    boxShadow: selected
+                      ? "inset 0.25rem 0.25rem 0 rgb(0,0,0,.25)"
+                      : "none",
+                    transition: `all ease-in-out 0.1s, background ease-in 0.1s ${
+                      index * 0.02
+                    }s`,
+                    padding: selected
+                      ? "2.125rem 0.375rem 1.875rem 0.875rem"
+                      : "2rem 0.5rem",
+                    opacity: colorPickerActive != null ? "0.5" : "1",
+                  };
+                  let adaptiveTextStyles = { color: swatch.displayColor };
+                  let contrastStyles = { opacity: displayContrast ? 1 : 0 };
+                  return (
+                    <div
+                      className="swatch"
+                      onClick={() => selectSwatch(index)}
+                      onMouseEnter={() => hoverSwatch(index)}
+                      onMouseLeave={() => hoverSwatch(null)}>
+                      <div className="swatch__body" style={swatchStyles}>
+                        <div
+                          className="swatch__white-contrast"
+                          style={contrastStyles}>
+                          <p className="swatch__contrast-text">
+                            White Contrast
+                          </p>
+                          <p
+                            className="swatch__contrast-value"
+                            style={{ background: "white", color: swatch.hex }}>
+                            {swatch.contrastWhite}
+                          </p>
+                        </div>
+                        <div
+                          className="swatch__label"
+                          style={adaptiveTextStyles}>
+                          <p className="swatch__index">
+                            {_.padStart(index + 1, 2, "0")}
+                          </p>
+                          <p className="swatch__hex">{swatch.hex}</p>
+                        </div>
+                        <div
+                          className="swatch__black-contrast"
+                          style={contrastStyles}>
+                          <p className="swatch__contrast-text">
+                            Black Contrast
+                          </p>
+                          <p
+                            className="swatch__contrast-value"
+                            style={{ background: "black", color: swatch.hex }}>
+                            {swatch.contrastBlack}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
             </>
+          )}
+          {colorPickerActive != null && (
+            <div className="color-picker__wrapper">
+              <div
+                className="color-picker"
+                onClick={(e) => e.stopPropagation()}>
+                <SketchPicker
+                  color={
+                    palettes[selectedSeed]
+                      ? palettes[selectedSeed].swatches[selectedSwatch].hex
+                      : "#FFFFFF"
+                  }
+                  onChangeComplete={updateSeedColor}
+                />
+              </div>
+            </div>
           )}
         </div>
       </main>

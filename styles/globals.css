@@ -141,7 +141,7 @@ a {
 }
 
 .controls {
-  height: 4vh;
+  height: 6vh;
   padding: 0 2vw;
   display: flex;
   flex-direction: row;
@@ -152,6 +152,18 @@ a {
 .seed-colors {
   display: flex;
   flex-direction: row;
+  align-items: center;
+}
+
+.seed-colors__label {
+  font-size: 1.25rem;
+  margin-right: 1rem;
+}
+
+.seed-colors__blank-state {
+  margin-right: 1rem;
+  font-style: italic;
+  color: var(--grayscale-2);
 }
 
 .seed {
@@ -164,7 +176,7 @@ a {
 }
 
 .seed--selected {
-  border: var(--grayscale-1) solid 1px;
+  /* border: var(--grayscale-1) solid 1px; */
 }
 
 .seed__label {
@@ -196,8 +208,26 @@ a {
   height: calc(2.5rem - 2px);
 }
 
+.color-picker__wrapper {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.color-picker {
+  z-index: 10;
+  pointer-events: all;
+}
+
 .swatches {
-  height: 86vh;
+  position: relative;
+  height: 84vh;
   background: linear-gradient(
     to bottom,
     white 0%,
