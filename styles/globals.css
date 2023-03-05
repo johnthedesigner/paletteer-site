@@ -208,21 +208,45 @@ a {
   height: calc(2.5rem - 2px);
 }
 
-.color-picker__wrapper {
-  pointer-events: none;
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.side-controls {
+  background: white;
+  width: 10vw;
+  align-self: stretch;
+  margin: 0 0.75vw;
+  padding: 1vw;
+  box-shadow: 0.25rem 0.25rem 0 rgb(0, 0, 0, 0.25);
+  border-radius: 2vw;
+}
+
+.side-controls__label {
+  font-weight: 700;
+  color: var(--grayscale-10);
 }
 
 .color-picker {
-  z-index: 10;
-  pointer-events: all;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.color-picker__saturation {
+  display: block;
+  position: relative;
+  height: 10rem;
+  width: 100%;
+  background: var(--grayscale-0);
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.color-picker__hue {
+  position: relative;
+  height: 1rem;
+}
+
+.color-picker__hex {
+  height: auto;
 }
 
 .swatches {

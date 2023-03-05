@@ -1,27 +1,29 @@
-import Logo from "@/components/logo";
-import PlusIcon from "@/components/PlusIcon";
-import generateColors from "@/utils/generateColors";
 import chroma from "chroma-js";
 import _ from "lodash";
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import { CompactPicker, SketchPicker } from "react-color";
+
+import ColorPicker from "@/components/ColorPicker";
+import Logo from "@/components/logo";
+import PlusIcon from "@/components/PlusIcon";
+import generateColors from "@/utils/generateColors";
 
 export default function Home() {
+  const defaultSeed = { hex: "#FFFFFF", name: null };
+
   const [palettes, setPalettes] = useState([]);
-  const [seeds, setSeeds] = useState(["#F77777"]);
+  const [seeds, setSeeds] = useState([defaultSeed]);
   const [selectedSeed, setSelectedSeed] = useState(0);
   const [selectedSwatch, setSelectedSwatch] = useState(0);
   const [hoveredSwatch, setHoveredSwatch] = useState(null);
   const [seedLabelEditor, setSeedLabelEditor] = useState(null);
-  const [colorPickerActive, setColorPickerActive] = useState(0);
 
   // When the seed colors are updated, update full palettes
   useEffect(() => {
     setPalettes(
       _.map(seeds, (seed) => {
-        if (chroma.valid(seed)) {
-          return generateColors(seed);
+        if (chroma.valid(seed.hex)) {
+          return generateColors(seed.hex);
         } else {
           return generateColors("white");
         }
@@ -30,15 +32,8 @@ export default function Home() {
   }, [seeds]);
 
   const addColor = async () => {
-    await setSeeds([...seeds, "#F77777"]);
+    await setSeeds([...seeds, defaultSeed]);
     selectSeed(seeds.length);
-    setColorPickerActive(seeds.length);
-  };
-
-  const updateSeed = (e, index) => {
-    let newSeeds = [...seeds];
-    newSeeds[index] = e.target.value;
-    setSeeds(newSeeds);
   };
 
   const selectSeed = (index) => {
@@ -58,10 +53,25 @@ export default function Home() {
   };
 
   const updateSeedColor = (color) => {
-    console.log("color to update", color.hex);
     let newSeeds = [...seeds];
-    newSeeds[colorPickerActive] = color.hex;
+    newSeeds[selectedSeed].hex = color.hex;
     setSeeds(newSeeds);
+  };
+
+  const updateSeedName = (e) => {
+    let newSeeds = [...seeds];
+    newSeeds[selectedSeed].name = e.target.value;
+    setSeeds(newSeeds);
+  };
+
+  const getSelectedSeedName = () => {
+    if (seeds[selectedSeed]) {
+      if (seeds[selectedSeed].name != null) {
+        return seeds[selectedSeed].name;
+      } else {
+        return palettes[selectedSeed] ? palettes[selectedSeed].name : "";
+      }
+    }
   };
 
   const Seed = ({ index, seed }) => {
@@ -70,7 +80,7 @@ export default function Home() {
         <button
           className="seed__drop"
           style={{
-            background: seed,
+            background: seed.hex,
             boxShadow:
               selectedSeed === index
                 ? "inset 0.25rem 0.25rem 0 rgb(0,0,0,.25)"
@@ -80,29 +90,16 @@ export default function Home() {
         />
         {selectedSeed === index && (
           <>
-            {seedLabelEditor === index ? (
-              <input
-                className="seed__label-input"
-                value={palettes[index] ? palettes[index].name : ""}
-                onKeyUp={(e) => {
-                  if (e.key === "Enter") {
-                    editingSeedLabel(null);
-                  }
-                }}
-                onBlur={() => editingSeedLabel(null)}
-              />
-            ) : (
-              <div
-                className="seed__label"
-                onDoubleClick={() => editingSeedLabel(index)}
-                style={{
-                  color: palettes[selectedSeed]
-                    ? palettes[selectedSeed].swatches[6].hex
-                    : "black",
-                }}>
-                {palettes[index] ? palettes[index].name : ""}
-              </div>
-            )}
+            <div
+              className="seed__label"
+              onDoubleClick={() => editingSeedLabel(index)}
+              style={{
+                color: palettes[selectedSeed]
+                  ? palettes[selectedSeed].swatches[6].hex
+                  : "black",
+              }}>
+              {getSelectedSeedName()}
+            </div>
           </>
         )}
       </div>
@@ -117,7 +114,7 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main onClick={() => setColorPickerActive(null)}>
+      <main>
         <div className="header">
           <div
             className="logo"
@@ -159,6 +156,32 @@ export default function Home() {
           )}
           {palettes.length > 0 && (
             <>
+              <div className="side-controls">
+                <p className="side-controls__label">Name</p>
+                <input
+                  className="side-controls__input"
+                  value={getSelectedSeedName()}
+                  onChange={updateSeedName}
+                />
+                <p className="side-controls__label">Name</p>
+                {selectedSeed != null && (
+                  <ColorPicker
+                    color={
+                      seeds[selectedSeed] ? seeds[selectedSeed].hex : "#FFFFFF"
+                    }
+                    hex={
+                      seeds[selectedSeed] ? seeds[selectedSeed].hex : "#FFFFFF"
+                    }
+                    hsl={chroma(
+                      seeds[selectedSeed] ? seeds[selectedSeed].hex : "#FFFFFF"
+                    ).hsl()}
+                    hsv={chroma(
+                      seeds[selectedSeed] ? seeds[selectedSeed].hex : "#FFFFFF"
+                    ).hsv()}
+                    onChange={updateSeedColor}
+                  />
+                )}
+              </div>
               {_.map(
                 (palettes[selectedSeed] ? palettes[selectedSeed] : []).swatches,
                 (swatch, index) => {
@@ -178,7 +201,6 @@ export default function Home() {
                     padding: selected
                       ? "2.125rem 0.375rem 1.875rem 0.875rem"
                       : "2rem 0.5rem",
-                    opacity: colorPickerActive != null ? "0.5" : "1",
                   };
                   let adaptiveTextStyles = { color: swatch.displayColor };
                   let contrastStyles = { opacity: displayContrast ? 1 : 0 };
@@ -227,22 +249,6 @@ export default function Home() {
                 }
               )}
             </>
-          )}
-          {colorPickerActive != null && (
-            <div className="color-picker__wrapper">
-              <div
-                className="color-picker"
-                onClick={(e) => e.stopPropagation()}>
-                <SketchPicker
-                  color={
-                    palettes[selectedSeed]
-                      ? palettes[selectedSeed].swatches[selectedSwatch].hex
-                      : "#FFFFFF"
-                  }
-                  onChangeComplete={updateSeedColor}
-                />
-              </div>
-            </div>
           )}
         </div>
       </main>
