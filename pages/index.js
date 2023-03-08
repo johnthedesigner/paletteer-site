@@ -113,6 +113,20 @@ export default function Home({ colors, names }) {
     let newSeeds = [...seeds];
     newSeeds.splice(selectedSeed, 1);
     setSeeds(newSeeds);
+
+    let nextSelectedSeed = selectedSeed;
+
+    // If we are deleting the only seed
+    if (seeds.length === 1) {
+      nextSelectedSeed = null;
+    }
+
+    // If we are deleting the last seed in the list
+    if (seeds.length > 1 && selectedSeed + 1 === seeds.length) {
+      nextSelectedSeed = selectedSeed - 1;
+    }
+
+    selectSeed(nextSelectedSeed);
   };
 
   const getSelectedSeedName = () => {
@@ -178,7 +192,6 @@ export default function Home({ colors, names }) {
         <div className="controls">
           <div className="seed-colors">
             <div className="seed-colors__list">
-              <h2 className="seed-colors__label">My Palette:</h2>
               {seeds.length > 0 ? (
                 <>
                   {_.map(seeds, (seed, index) => {
@@ -192,11 +205,8 @@ export default function Home({ colors, names }) {
               ) : (
                 <p className="seed-colors__blank-state">None yet!</p>
               )}
-              <button className="button" onClick={addColor}>
-                <span className="button__icon">
-                  <PlusIcon />
-                </span>
-                Add Color
+              <button className="add-button" onClick={addColor}>
+                <PlusIcon />
               </button>
             </div>
           </div>
@@ -251,11 +261,12 @@ export default function Home({ colors, names }) {
           <div className="swatches__body">
             <div className="swatches">
               <div className="swatches__header">
+                <span className="swatches__header-label">Selected Hue</span>
                 <h2 className="swatches__swatch-name">
                   {getSelectedSeedName()}
                 </h2>
                 <button
-                  className="button"
+                  className={`button ${darkMode ? "button--dark-mode" : ""}`}
                   onClick={() => setShowColorEditor(!showColorEditor)}>
                   <span className="button__icon">
                     <ColorEditorIcon />
@@ -392,7 +403,8 @@ export default function Home({ colors, names }) {
                     <div className="side-controls__buttons">
                       <button
                         className="button button--delete side-controls__delete-button"
-                        onClick={deleteSelectedSeed}>
+                        onClick={deleteSelectedSeed}
+                        disabled={seeds.length === 1}>
                         Delete
                       </button>
                       <button

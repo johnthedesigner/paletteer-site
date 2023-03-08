@@ -158,6 +158,18 @@ a {
   vertical-align: middle;
 }
 
+.button:disabled {
+  background: var(--grayscale-1);
+  color: var(--grayscale-4);
+  cursor: default;
+  pointer-events: none;
+}
+
+.button:disabled:hover {
+  background: var(--grayscale-1);
+  color: var(--grayscale-4);
+}
+
 .button:hover {
   background: var(--blue-1);
   color: var(--blue-5);
@@ -184,6 +196,11 @@ a {
 .button--delete:hover {
   background: var(--red-1);
   color: var(--red-5);
+}
+
+.button--dark-mode {
+  background: var(--grayscale-10);
+  color: var(--grayscale-0);
 }
 
 .radio-buttons {
@@ -222,6 +239,23 @@ a {
 
 .radio-button svg {
   display: inline-block;
+  width: 2rem;
+  height: 2rem;
+}
+
+.add-button {
+  position: relative;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: var(--grayscale-1) solid 1px;
+}
+
+.add-button svg {
   width: 2rem;
   height: 2rem;
 }
@@ -319,6 +353,7 @@ a {
 
 .seed__drop--selected {
   box-shadow: rgb(0, 0, 0, 0.25) 0.25rem 0.25rem 0.5rem inset;
+  outline: var(--grayscale-1) solid 1px;
 }
 
 .seed__label {
@@ -401,14 +436,13 @@ a {
   padding: 1rem;
   background: var(--grayscale-0);
   border: none;
-  border-radius: 0.5vw;
+  border-radius: 1rem;
+  transition: all ease-out 0.1s;
 }
 
 .side-controls--dark-mode {
   background: var(--grayscale-10);
-  background: black;
-  border-color: var(--grayscale-8);
-  border: none;
+  border-color: var(--grayscale-6);
   color: var(--grayscale-0);
 }
 
@@ -513,7 +547,11 @@ a {
 
 .swatches__area {
   background-color: white;
-  background-image: linear-gradient(to bottom, black 0%, black 100%);
+  background-image: linear-gradient(
+    to bottom,
+    var(--grayscale-11) 0%,
+    var(--grayscale-11) 100%
+  );
   background-size: 0rem 100vh;
   background-repeat: no-repeat;
   background-position: bottom left;
@@ -538,10 +576,18 @@ a {
 }
 
 .swatches__header {
+  position: relative;
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 0 0.5vw 2rem;
+  padding: 1rem 0.5vw 2rem;
+}
+
+.swatches__header-label {
+  position: absolute;
+  top: 0rem;
+  left: 0.5vw;
+  color: var(--grayscale-4);
 }
 
 .swatches__swatch-name {
@@ -655,9 +701,21 @@ a {
   html,
   body {
     font-size: 12px;
+    height: 100%;
   }
-  .controls {
+
+  div#__next {
+    height: 100%;
+  }
+
+  main {
+    display: flex;
     flex-direction: column;
+    height: 100%;
+  }
+
+  .controls {
+    flex-direction: column-reverse;
     align-items: flex-start;
     height: 10vh;
   }
@@ -678,7 +736,7 @@ a {
   }
 
   .swatches__area {
-    height: 82vh;
+    flex: 1;
   }
 
   .side-controls__wrapper {
@@ -716,10 +774,10 @@ a {
   .swatch__body {
     flex-direction: row;
     padding: 0rem 2rem;
-    top: 0.5vh;
+    top: 0.2vh;
     left: 0;
     right: 0;
-    bottom: 0.5vh;
+    bottom: 0.2vh;
     align-items: center;
   }
 
@@ -755,20 +813,4 @@ a {
     height: 90%;
     width: auto;
   }
-
-  /* .swatch__contrast-text {
-    display: none;
-  }
-
-  .swatch__white-contrast,
-  .swatch__black-contrast {
-    align-items: center;
-    justify-content: center;
-  }
-
-  .swatch__contrast-value {
-    padding: 0rem 1rem;
-    margin: 0;
-    align-self: center;
-  } */
 }

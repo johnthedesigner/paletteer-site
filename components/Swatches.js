@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 let swatches = [
-  "#ABB8C3",
+  "#152E36",
   "#EB144C",
   "#FF7461",
   "#FFA23F",
