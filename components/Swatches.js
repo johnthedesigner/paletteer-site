@@ -21,6 +21,7 @@ const Swatches = ({ color, updateSeedColor }) => {
       {_.map(swatches, (swatch) => {
         return (
           <svg
+            key={swatch}
             className="sample-swatch"
             width="36"
             height="36"

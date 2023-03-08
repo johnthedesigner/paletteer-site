@@ -1,7 +1,8 @@
 import chroma from "chroma-js";
 import _ from "lodash";
 import Head from "next/head";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 
 import ColorPicker from "@/components/ColorPicker";
 import Logo from "@/components/logo";
@@ -9,14 +10,16 @@ import PlusIcon from "@/components/PlusIcon";
 import ModeIcon from "@/components/ModeIcon";
 import SwatchCountIcon from "@/components/SwatchCountIcon";
 import generateColors from "@/utils/generateColors";
-import { CirclePicker, SketchPicker } from "react-color";
 import Swatches from "@/components/Swatches";
 import SwatchContrast from "@/components/SwatchContrast";
 import ColorEditorIcon from "@/components/ColorEditorIcon";
 import CodeIcon from "@/components/CodeIcon";
 
-export default function Home() {
+export default function Home({ colors, names }) {
+  console.log(colors, names);
   const defaultSeed = { hex: "#56CCF2", name: null };
+
+  const router = useRouter();
 
   const [palettes, setPalettes] = useState([]);
   const [seeds, setSeeds] = useState([defaultSeed]);
@@ -30,6 +33,22 @@ export default function Home() {
 
   // When the seed colors are updated, update full palettes
   useEffect(() => {
+    if (seeds.length > 0) {
+      let colorString = _.join(
+        _.map(seeds, (seed) => {
+          return encodeURIComponent(_.trimStart(seed.hex, "#"));
+        }),
+        "|"
+      );
+      let nameString = _.join(
+        _.map(seeds, (seed) => {
+          return encodeURIComponent(seed.name);
+        }),
+        "|"
+      );
+      console.log(seeds, colorString, nameString);
+      router.push(`/?colors=${colorString}&names=${nameString}`);
+    }
     setPalettes(
       _.map(seeds, (seed) => {
         if (chroma.valid(seed.hex)) {
@@ -40,6 +59,16 @@ export default function Home() {
       })
     );
   }, [seeds, swatchQuantity]);
+
+  useEffect(() => {
+    let newSeeds = _.map(colors, (color, index) => {
+      let seedName = decodeURIComponent(names[index]);
+      seedName = seedName === "null" ? null : seedName;
+      let seedHex = `#${decodeURIComponent(color)}`;
+      return { hex: seedHex, name: seedName };
+    });
+    setSeeds(newSeeds);
+  }, []);
 
   const addColor = async () => {
     await setSeeds([...seeds, defaultSeed]);
@@ -150,9 +179,9 @@ export default function Home() {
                 <>
                   {_.map(seeds, (seed, index) => {
                     return (
-                      <>
+                      <React.Fragment key={index}>
                         <Seed index={index} seed={seed} />
-                      </>
+                      </React.Fragment>
                     );
                   })}
                 </>
@@ -262,6 +291,7 @@ export default function Home() {
                         };
                         return (
                           <div
+                            key={index}
                             className={`swatch ${
                               selected ? "swatch--selected" : ""
                             }`}
@@ -377,3 +407,17 @@ export default function Home() {
     </>
   );
 }
+
+// Fetch products for server side rendering
+export const getServerSideProps = async (ctx) => {
+  // Build query tags list
+  // Get query string
+  let { query } = ctx;
+  // Build an array of colors
+  let colors = query.colors ? query.colors.split("|") : [];
+  let names = query.names ? query.names.split("|") : [];
+
+  return {
+    props: { colors, names },
+  };
+};
