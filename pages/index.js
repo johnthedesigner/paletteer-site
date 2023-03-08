@@ -6,38 +6,50 @@ import { useEffect, useState } from "react";
 import ColorPicker from "@/components/ColorPicker";
 import Logo from "@/components/logo";
 import PlusIcon from "@/components/PlusIcon";
+import ModeIcon from "@/components/ModeIcon";
+import SwatchCountIcon from "@/components/SwatchCountIcon";
 import generateColors from "@/utils/generateColors";
+import { CirclePicker, SketchPicker } from "react-color";
+import Swatches from "@/components/Swatches";
+import SwatchContrast from "@/components/SwatchContrast";
+import ColorEditorIcon from "@/components/ColorEditorIcon";
+import CodeIcon from "@/components/CodeIcon";
 
 export default function Home() {
-  const defaultSeed = { hex: "#FFFFFF", name: null };
+  const defaultSeed = { hex: "#56CCF2", name: null };
 
   const [palettes, setPalettes] = useState([]);
   const [seeds, setSeeds] = useState([defaultSeed]);
   const [selectedSeed, setSelectedSeed] = useState(0);
-  const [selectedSwatch, setSelectedSwatch] = useState(0);
+  const [selectedSwatch, setSelectedSwatch] = useState(null);
   const [hoveredSwatch, setHoveredSwatch] = useState(null);
   const [seedLabelEditor, setSeedLabelEditor] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
+  const [showColorEditor, setShowColorEditor] = useState(false);
+  const [swatchQuantity, setSwatchQuantity] = useState(12);
 
   // When the seed colors are updated, update full palettes
   useEffect(() => {
     setPalettes(
       _.map(seeds, (seed) => {
         if (chroma.valid(seed.hex)) {
-          return generateColors(seed.hex);
+          return generateColors(seed.hex, swatchQuantity);
         } else {
-          return generateColors("white");
+          return generateColors("white", swatchQuantity);
         }
       })
     );
-  }, [seeds]);
+  }, [seeds, swatchQuantity]);
 
   const addColor = async () => {
     await setSeeds([...seeds, defaultSeed]);
     selectSeed(seeds.length);
+    setShowColorEditor(true);
   };
 
   const selectSeed = (index) => {
     setSelectedSeed(index);
+    setSelectedSwatch(null);
   };
 
   const selectSwatch = (index) => {
@@ -64,6 +76,12 @@ export default function Home() {
     setSeeds(newSeeds);
   };
 
+  const deleteSelectedSeed = () => {
+    let newSeeds = [...seeds];
+    newSeeds.splice(selectedSeed, 1);
+    setSeeds(newSeeds);
+  };
+
   const getSelectedSeedName = () => {
     if (seeds[selectedSeed]) {
       if (seeds[selectedSeed].name != null) {
@@ -78,13 +96,11 @@ export default function Home() {
     return (
       <div className={`seed ${selectedSeed === index ? "seed--selected" : ""}`}>
         <button
-          className="seed__drop"
+          className={`seed__drop ${
+            selectedSeed === index ? "seed__drop--selected" : ""
+          }`}
           style={{
             background: seed.hex,
-            boxShadow:
-              selectedSeed === index
-                ? "inset 0.25rem 0.25rem 0 rgb(0,0,0,.25)"
-                : "none",
           }}
           onClick={(e) => selectSeed(index)}
         />
@@ -128,128 +144,234 @@ export default function Home() {
         </div>
         <div className="controls">
           <div className="seed-colors">
-            <p className="seed-colors__label">Seed Colors: </p>
-            {seeds.length > 0 ? (
-              <>
-                {_.map(seeds, (seed, index) => {
-                  return (
-                    <>
-                      <Seed index={index} seed={seed} />
-                    </>
-                  );
-                })}
-              </>
-            ) : (
-              <p className="seed-colors__blank-state">None yet!</p>
-            )}
-            <button className="seed__add-button" onClick={addColor}>
-              <PlusIcon />
+            <div className="seed-colors__list">
+              <h2 className="seed-colors__label">My Palette:</h2>
+              {seeds.length > 0 ? (
+                <>
+                  {_.map(seeds, (seed, index) => {
+                    return (
+                      <>
+                        <Seed index={index} seed={seed} />
+                      </>
+                    );
+                  })}
+                </>
+              ) : (
+                <p className="seed-colors__blank-state">None yet!</p>
+              )}
+              <button className="button" onClick={addColor}>
+                <span className="button__icon">
+                  <PlusIcon />
+                </span>
+                Add Color
+              </button>
+            </div>
+          </div>
+          <div className="palette-actions">
+            <button
+              className="button"
+              onClick={() => setDarkMode(!darkMode)}
+              style={{ marginRight: "1rem" }}>
+              <span className="button__icon">
+                <ModeIcon darkMode={darkMode} />
+              </span>
+              {darkMode ? "Dark Mode" : "Light Mode"}
             </button>
-            {/* <button>Export Colors</button> */}
+            <div className="radio-buttons" style={{ marginRight: "1rem" }}>
+              <button
+                className={`radio-button ${
+                  swatchQuantity === 8 ? "radio-button--selected" : ""
+                }`}
+                onClick={() => setSwatchQuantity(8)}>
+                <SwatchCountIcon count="s" />
+              </button>
+              <button
+                className={`radio-button ${
+                  swatchQuantity === 12 ? "radio-button--selected" : ""
+                }`}
+                onClick={() => setSwatchQuantity(12)}>
+                <SwatchCountIcon count="m" />
+              </button>
+              <button
+                className={`radio-button ${
+                  swatchQuantity === 16 ? "radio-button--selected" : ""
+                }`}
+                onClick={() => setSwatchQuantity(16)}>
+                <SwatchCountIcon count="l" />
+              </button>
+            </div>
+            <button
+              className="button"
+              onClick={() => setShowColorEditor(!showColorEditor)}>
+              <span className="button__icon">
+                <CodeIcon />
+              </span>
+              Export
+            </button>
           </div>
         </div>
-        <div className="swatches">
-          {palettes.length === 0 && (
-            <>
-              <h1>Swatches blank state</h1>
-            </>
-          )}
-          {palettes.length > 0 && (
-            <>
-              <div className="side-controls">
+        <div
+          className={`swatches__area ${
+            darkMode ? "swatches__area--dark-mode" : ""
+          }`}
+          onClick={() => setSelectedSwatch(null)}>
+          <div className="swatches__body">
+            <div className="swatches">
+              <div className="swatches__header">
+                <h2 className="swatches__swatch-name">
+                  {getSelectedSeedName()}
+                </h2>
+                <button
+                  className="button"
+                  onClick={() => setShowColorEditor(!showColorEditor)}>
+                  <span className="button__icon">
+                    <ColorEditorIcon />
+                  </span>
+                  {!showColorEditor ? "Edit Color" : "Close Color Editor"}
+                </button>
+              </div>
+              <div className="swatches__list">
+                {palettes.length === 0 && (
+                  <>
+                    <h1>Swatches blank state</h1>
+                  </>
+                )}
+                {palettes.length > 0 && (
+                  <>
+                    {_.map(
+                      (palettes[selectedSeed] ? palettes[selectedSeed] : [])
+                        .swatches,
+                      (swatch, index) => {
+                        // Check if this is the selected swatch
+                        let selected = index === selectedSwatch;
+                        // Check if we should display contrast figures
+                        let displayContrast =
+                          index === selectedSwatch || index === hoveredSwatch;
+                        let swatchStyles = {
+                          background: swatch.hex,
+                          boxShadow: selected
+                            ? "inset 0.25rem 0.25rem 0.5rem rgb(0,0,0,.25)"
+                            : "none",
+                          transition: `all ease-in-out 0.1s, background ease-in 0.1s ${
+                            index * 0.02
+                          }s`,
+                        };
+                        let adaptiveTextStyles = { color: swatch.displayColor };
+                        let contrastStyles = {
+                          opacity: displayContrast ? 1 : 0,
+                        };
+                        return (
+                          <div
+                            className={`swatch ${
+                              selected ? "swatch--selected" : ""
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              selectSwatch(index);
+                            }}
+                            onMouseEnter={() => hoverSwatch(index)}
+                            onMouseLeave={() => hoverSwatch(null)}>
+                            <div
+                              className={`swatch__body ${
+                                selected ? "swatch__body--selected" : ""
+                              }`}
+                              style={swatchStyles}>
+                              <div
+                                className="swatch__label"
+                                style={adaptiveTextStyles}>
+                                <p className="swatch__index">
+                                  {_.padStart(index + 1, 2, "0")}
+                                </p>
+                                <p className="swatch__hex">{swatch.hex}</p>
+                              </div>
+                              <div
+                                className="contrast-dot__wrapper"
+                                style={contrastStyles}>
+                                <SwatchContrast
+                                  whiteContrast={swatch.contrastWhite}
+                                  blackContrast={swatch.contrastBlack}
+                                  color={swatch.hex}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+            <div
+              className={`side-controls__wrapper ${
+                showColorEditor ? "" : "side-controls__wrapper--hidden"
+              }`}>
+              <div
+                className={`side-controls ${
+                  darkMode ? "side-controls--dark-mode" : ""
+                }`}>
                 <p className="side-controls__label">Name</p>
                 <input
                   className="side-controls__input"
                   value={getSelectedSeedName()}
                   onChange={updateSeedName}
                 />
-                <p className="side-controls__label">Name</p>
+                <p className="side-controls__label">Color</p>
                 {selectedSeed != null && (
-                  <ColorPicker
-                    color={
-                      seeds[selectedSeed] ? seeds[selectedSeed].hex : "#FFFFFF"
-                    }
-                    hex={
-                      seeds[selectedSeed] ? seeds[selectedSeed].hex : "#FFFFFF"
-                    }
-                    hsl={chroma(
-                      seeds[selectedSeed] ? seeds[selectedSeed].hex : "#FFFFFF"
-                    ).hsl()}
-                    hsv={chroma(
-                      seeds[selectedSeed] ? seeds[selectedSeed].hex : "#FFFFFF"
-                    ).hsv()}
-                    onChange={updateSeedColor}
-                  />
+                  <>
+                    <ColorPicker
+                      color={
+                        seeds[selectedSeed]
+                          ? seeds[selectedSeed].hex
+                          : "#FFFFFF"
+                      }
+                      hex={
+                        seeds[selectedSeed]
+                          ? seeds[selectedSeed].hex
+                          : "#FFFFFF"
+                      }
+                      hsl={chroma(
+                        seeds[selectedSeed]
+                          ? seeds[selectedSeed].hex
+                          : "#FFFFFF"
+                      ).hsl()}
+                      hsv={chroma(
+                        seeds[selectedSeed]
+                          ? seeds[selectedSeed].hex
+                          : "#FFFFFF"
+                      ).hsv()}
+                      onChange={updateSeedColor}
+                    />
+                    <p
+                      className="side-controls__label"
+                      style={{ marginTop: "1rem" }}>
+                      Swatches
+                    </p>
+                    <Swatches
+                      color={
+                        seeds[selectedSeed]
+                          ? seeds[selectedSeed].hex
+                          : "#FFFFFF"
+                      }
+                      updateSeedColor={updateSeedColor}
+                    />
+                    <div className="side-controls__buttons">
+                      <button
+                        className="button button--delete side-controls__delete-button"
+                        onClick={deleteSelectedSeed}>
+                        Delete
+                      </button>
+                      <button
+                        className="button side-controls__done-button"
+                        onClick={() => setShowColorEditor(!showColorEditor)}>
+                        Done
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
-              {_.map(
-                (palettes[selectedSeed] ? palettes[selectedSeed] : []).swatches,
-                (swatch, index) => {
-                  // Check if this is the selected swatch
-                  let selected = index === selectedSwatch;
-                  // Check if we should display contrast figures
-                  let displayContrast =
-                    index === selectedSwatch || index === hoveredSwatch;
-                  let swatchStyles = {
-                    background: swatch.hex,
-                    boxShadow: selected
-                      ? "inset 0.25rem 0.25rem 0 rgb(0,0,0,.25)"
-                      : "none",
-                    transition: `all ease-in-out 0.1s, background ease-in 0.1s ${
-                      index * 0.02
-                    }s`,
-                    padding: selected
-                      ? "2.125rem 0.375rem 1.875rem 0.875rem"
-                      : "2rem 0.5rem",
-                  };
-                  let adaptiveTextStyles = { color: swatch.displayColor };
-                  let contrastStyles = { opacity: displayContrast ? 1 : 0 };
-                  return (
-                    <div
-                      className="swatch"
-                      onClick={() => selectSwatch(index)}
-                      onMouseEnter={() => hoverSwatch(index)}
-                      onMouseLeave={() => hoverSwatch(null)}>
-                      <div className="swatch__body" style={swatchStyles}>
-                        <div
-                          className="swatch__white-contrast"
-                          style={contrastStyles}>
-                          <p className="swatch__contrast-text">
-                            White Contrast
-                          </p>
-                          <p
-                            className="swatch__contrast-value"
-                            style={{ background: "white", color: swatch.hex }}>
-                            {swatch.contrastWhite}
-                          </p>
-                        </div>
-                        <div
-                          className="swatch__label"
-                          style={adaptiveTextStyles}>
-                          <p className="swatch__index">
-                            {_.padStart(index + 1, 2, "0")}
-                          </p>
-                          <p className="swatch__hex">{swatch.hex}</p>
-                        </div>
-                        <div
-                          className="swatch__black-contrast"
-                          style={contrastStyles}>
-                          <p className="swatch__contrast-text">
-                            Black Contrast
-                          </p>
-                          <p
-                            className="swatch__contrast-value"
-                            style={{ background: "black", color: swatch.hex }}>
-                            {swatch.contrastBlack}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-              )}
-            </>
-          )}
+            </div>
+          </div>
         </div>
       </main>
     </>
