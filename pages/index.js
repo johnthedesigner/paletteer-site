@@ -1,7 +1,7 @@
 import chroma from "chroma-js";
 import _ from "lodash";
 import Head from "next/head";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 
 import ColorPicker from "@/components/ColorPicker";
@@ -14,11 +14,14 @@ import Swatches from "@/components/Swatches";
 import SwatchContrast from "@/components/SwatchContrast";
 import ColorEditorIcon from "@/components/ColorEditorIcon";
 import CodeIcon from "@/components/CodeIcon";
+import handler from "./api/hello";
 
 export default function Home({ colors, names }) {
   const defaultSeed = { hex: "#56CCF2", name: null };
 
   const router = useRouter();
+
+  const viewportRef = useRef();
 
   const [palettes, setPalettes] = useState([]);
   const [seeds, setSeeds] = useState([defaultSeed]);
@@ -29,6 +32,7 @@ export default function Home({ colors, names }) {
   const [darkMode, setDarkMode] = useState(false);
   const [showColorEditor, setShowColorEditor] = useState(false);
   const [swatchQuantity, setSwatchQuantity] = useState(12);
+  const [viewportHeight, setViewportHeight] = useState(null);
 
   // When the seed colors are updated, update full palettes
   useEffect(() => {
@@ -72,6 +76,17 @@ export default function Home({ colors, names }) {
       });
       setSeeds(newSeeds);
     }
+  }, []);
+
+  // when the page resizes, make sure the main element is sized to match
+  useEffect(() => {
+    const handleResize = () => {
+      setViewportHeight(document.documentElement.clientHeight);
+    };
+
+    handleResize();
+
+    window.onresize = handleResize;
   }, []);
 
   const addColor = async () => {
@@ -177,7 +192,9 @@ export default function Home({ colors, names }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main>
+      <main
+        ref={viewportRef}
+        style={{ height: `${viewportHeight}px`, overflow: "hidden" }}>
         <div className="header">
           <div
             className="logo"
