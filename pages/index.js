@@ -16,7 +16,6 @@ import ColorEditorIcon from "@/components/ColorEditorIcon";
 import CodeIcon from "@/components/CodeIcon";
 
 export default function Home({ colors, names }) {
-  console.log(colors, names);
   const defaultSeed = { hex: "#56CCF2", name: null };
 
   const router = useRouter();
@@ -46,7 +45,6 @@ export default function Home({ colors, names }) {
         }),
         "|"
       );
-      console.log(seeds, colorString, nameString);
       router.push(`/?colors=${colorString}&names=${nameString}`);
     }
     setPalettes(
@@ -61,13 +59,19 @@ export default function Home({ colors, names }) {
   }, [seeds, swatchQuantity]);
 
   useEffect(() => {
-    let newSeeds = _.map(colors, (color, index) => {
-      let seedName = decodeURIComponent(names[index]);
-      seedName = seedName === "null" ? null : seedName;
-      let seedHex = `#${decodeURIComponent(color)}`;
-      return { hex: seedHex, name: seedName };
-    });
-    setSeeds(newSeeds);
+    // Only update from query string if there are colors present
+    if (colors.length > 0) {
+      let newSeeds = _.map(colors, (color, index) => {
+        // Get the matching name and check if it should be null
+        let seedName = decodeURIComponent(names[index]);
+        seedName = seedName === "null" ? null : seedName;
+        // Get the hex color and reappend the hash
+        let seedHex = `#${decodeURIComponent(color)}`;
+
+        return { hex: seedHex, name: seedName };
+      });
+      setSeeds(newSeeds);
+    }
   }, []);
 
   const addColor = async () => {
